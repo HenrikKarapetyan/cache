@@ -1,0 +1,48 @@
+{
+  "name": "henrik/cache",
+  "type": "library",
+  "license": "MIT",
+  "minimum-stability": "dev",
+  "description": "Cache",
+  "authors": [
+    {
+      "name": "Henrik Karapetyan",
+      "email": "henrikkarapetyan@gmail.com"
+    }
+  ],
+  "require": {
+    "php": ">=8.2",
+    "henrik/contracts": "dev-main",
+    "psr/cache": "^3.0@dev",
+    "psr/simple-cache": "^3.0@dev"
+  },
+  "autoload": {
+    "psr-4": {
+      "Henrik\\Cache\\": "src"
+    }
+  },
+  "require-dev": {
+    "phpmd/phpmd": "^2.15",
+    "friendsofphp/php-cs-fixer": "v3.57.2",
+    "phpstan/phpstan": "2.0.x-dev",
+    "henrik/dependency-injector": "1.0.3"
+  },
+  "scripts": {
+    "phpstan": [
+      "Composer\\Config::disableProcessTimeout",
+      "./vendor/bin/phpstan --memory-limit=-1"
+    ],
+    "fix": [
+      "Composer\\Config::disableProcessTimeout",
+      "PHP_CS_FIXER_IGNORE_ENV=1 ./vendor/bin/php-cs-fixer fix src --diff -vvv --config=.php-cs-fixer.dist.php"
+    ],
+    "phpmd-ci": [
+      "Composer\\Config::disableProcessTimeout",
+      "./vendor/bin/phpmd ./src gitlab ./phpmd.xml > phpmd-report.json"
+    ],
+    "phpmd-html": [
+      "Composer\\Config::disableProcessTimeout",
+      "./vendor/bin/phpmd ./src html ./phpmd.xml > phpmd-report.html"
+    ]
+  }
+}
