@@ -2,7 +2,4 @@
 
 namespace src;
 
-class Cache
-{
-
-}
+class Cache {}

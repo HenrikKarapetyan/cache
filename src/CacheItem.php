@@ -1,39 +1,79 @@
 <?php
 
-namespace src;
+namespace Henrik\Cache;
 
+use DateInterval;
+use DateTime;
+use DateTimeInterface;
 use Psr\Cache\CacheItemInterface;
 
 class CacheItem implements CacheItemInterface
 {
+    private string $key;
+
+    private mixed $value;
+
+    private ?int $expiration = null;
+
+    public function __construct(string $key, mixed $value = null, ?DateTimeInterface $expiration = null)
+    {
+        $this->key   = $key;
+        $this->value = $value;
+
+        if ($expiration) {
+            $this->expiresAt($expiration);
+        }
+    }
 
     public function getKey(): string
     {
-        // TODO: Implement getKey() method.
+        return $this->key;
     }
 
     public function get(): mixed
     {
-        // TODO: Implement get() method.
+        if ($this->isHit()) {
+            return $this->value;
+        }
+
+        return null;
     }
 
     public function isHit(): bool
     {
-        // TODO: Implement isHit() method.
+        if ($this->expiration !== null) {
+            return $this->expiration > time();
+        }
+
+        return true;
     }
 
     public function set(mixed $value): static
     {
-        // TODO: Implement set() method.
+        $this->value = $value;
+
+        return $this;
     }
 
-    public function expiresAt(\DateTimeInterface $expiration): static
+    public function expiresAt(?DateTimeInterface $expiration): static
     {
-        // TODO: Implement expiresAt() method.
+        if (!is_null($expiration)) {
+            $this->expiration = $expiration->getTimestamp();
+        }
+
+        return $this;
     }
 
-    public function expiresAfter(\DateInterval $time): static
+    public function expiresAfter(null|DateInterval|int $time): static
     {
-        // TODO: Implement expiresAfter() method.
+        if (is_int($time)) {
+            $this->expiration = time() + $time;
+        }
+
+        if ($time instanceof DateInterval) {
+            $this->expiration = (new DateTime())->add($time)->getTimestamp();
+        }
+
+        return $this;
     }
 }
