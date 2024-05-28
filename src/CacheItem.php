@@ -76,4 +76,9 @@ class CacheItem implements CacheItemInterface
 
         return $this;
     }
+
+    public function getExpiration(): ?int
+    {
+        return $this->expiration;
+    }
 }
