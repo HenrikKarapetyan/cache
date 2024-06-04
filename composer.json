@@ -12,9 +12,9 @@
   ],
   "require": {
     "php": ">=8.2",
-    "henrik/contracts": "dev-main",
     "psr/cache": "^3.0@dev",
-    "psr/simple-cache": "^3.0@dev"
+    "psr/simple-cache": "^3.0@dev",
+    "henrik/filesystem": "dev-main"
   },
   "autoload": {
     "psr-4": {

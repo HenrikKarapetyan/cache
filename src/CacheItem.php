@@ -5,24 +5,28 @@ namespace Henrik\Cache;
 use DateInterval;
 use DateTime;
 use DateTimeInterface;
-use Psr\Cache\CacheItemInterface;
+use Henrik\Cache\Interfaces\BaseCacheItemInterface;
+use InvalidArgumentException;
 
-class CacheItem implements CacheItemInterface
+class CacheItem implements BaseCacheItemInterface
 {
     private string $key;
 
     private mixed $value;
+    private ?int $expirationTimestamp;
 
-    private ?int $expiration = null;
+    private bool $hasValue = false;
 
-    public function __construct(string $key, mixed $value = null, ?DateTimeInterface $expiration = null)
+    /**
+     * @param string                 $key
+     * @param mixed                  $value
+     * @param DateTimeInterface|null $expiration
+     */
+    public function __construct(string $key, mixed $value, ?DateTimeInterface $expiration = null)
     {
         $this->key   = $key;
         $this->value = $value;
-
-        if ($expiration) {
-            $this->expiresAt($expiration);
-        }
+        $this->expiresAt($expiration);
     }
 
     public function getKey(): string
@@ -32,17 +36,18 @@ class CacheItem implements CacheItemInterface
 
     public function get(): mixed
     {
-        if ($this->isHit()) {
-            return $this->value;
-        }
-
-        return null;
+        return $this->value;
     }
 
     public function isHit(): bool
     {
-        if ($this->expiration !== null) {
-            return $this->expiration > time();
+
+        if (!$this->hasValue) {
+            return false;
+        }
+
+        if ($this->expirationTimestamp !== null) {
+            return $this->expirationTimestamp > time();
         }
 
         return true;
@@ -50,15 +55,18 @@ class CacheItem implements CacheItemInterface
 
     public function set(mixed $value): static
     {
-        $this->value = $value;
+        $this->value    = $value;
+        $this->hasValue = true;
 
         return $this;
     }
 
     public function expiresAt(?DateTimeInterface $expiration): static
     {
-        if (!is_null($expiration)) {
-            $this->expiration = $expiration->getTimestamp();
+        $this->expirationTimestamp = null;
+
+        if ($expiration instanceof DateTimeInterface) {
+            $this->expirationTimestamp = $expiration->getTimestamp();
         }
 
         return $this;
@@ -66,19 +74,23 @@ class CacheItem implements CacheItemInterface
 
     public function expiresAfter(null|DateInterval|int $time): static
     {
-        if (is_int($time)) {
-            $this->expiration = time() + $time;
-        }
-
-        if ($time instanceof DateInterval) {
-            $this->expiration = (new DateTime())->add($time)->getTimestamp();
+        if ($time === null) {
+            $this->expirationTimestamp = null;
+        } elseif ($time instanceof DateInterval) {
+            $date = new DateTime();
+            $date->add($time);
+            $this->expirationTimestamp = $date->getTimestamp();
+        } elseif (is_int($time)) {
+            $this->expirationTimestamp = time() + $time;
+        } else {
+            throw new InvalidArgumentException('Cache item ttl/expiresAfter must be of type integer or \DateInterval.');
         }
 
         return $this;
     }
 
-    public function getExpiration(): ?int
+    public function getExpirationDate(): ?int
     {
-        return $this->expiration;
+        return $this->expirationTimestamp;
     }
 }
