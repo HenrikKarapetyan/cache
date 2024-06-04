@@ -10,12 +10,11 @@ use InvalidArgumentException;
 
 class CacheItem implements BaseCacheItemInterface
 {
+    protected bool $hasValue = true;
     private string $key;
 
     private mixed $value;
     private ?int $expirationTimestamp;
-
-    private bool $hasValue = false;
 
     /**
      * @param string                 $key
@@ -24,8 +23,8 @@ class CacheItem implements BaseCacheItemInterface
      */
     public function __construct(string $key, mixed $value, ?DateTimeInterface $expiration = null)
     {
-        $this->key   = $key;
-        $this->value = $value;
+        $this->key = $key;
+        $this->set($value);
         $this->expiresAt($expiration);
     }
 
@@ -89,7 +88,7 @@ class CacheItem implements BaseCacheItemInterface
         return $this;
     }
 
-    public function getExpirationDate(): ?int
+    public function getExpirationTimestamp(): ?int
     {
         return $this->expirationTimestamp;
     }

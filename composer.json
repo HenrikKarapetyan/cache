@@ -21,11 +21,17 @@
       "Henrik\\Cache\\": "src"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "henrik\\Tests\\": "tests"
+    }
+  },
   "require-dev": {
     "phpmd/phpmd": "^2.15",
     "friendsofphp/php-cs-fixer": "v3.57.2",
     "phpstan/phpstan": "2.0.x-dev",
-    "henrik/dependency-injector": "1.0.3"
+    "henrik/dependency-injector": "1.0.3",
+    "phpunit/phpunit": "^11.2@dev"
   },
   "scripts": {
     "phpstan": [

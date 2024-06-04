@@ -6,5 +6,5 @@ use Psr\Cache\CacheItemInterface;
 
 interface BaseCacheItemInterface extends CacheItemInterface
 {
-    public function getExpirationDate(): ?int;
+    public function getExpirationTimestamp(): ?int;
 }

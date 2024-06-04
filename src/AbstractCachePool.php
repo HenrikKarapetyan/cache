@@ -6,15 +6,16 @@ use Exception;
 use Generator;
 use Henrik\Cache\Exception\CacheException;
 use Henrik\Cache\Exception\CachePoolException;
+use Henrik\Cache\Exception\InvalidArgumentException;
 use Henrik\Cache\Interfaces\BaseCacheItemInterface;
-use InvalidArgumentException;
 use Psr\Cache\CacheItemInterface;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Psr\SimpleCache\CacheInterface;
 use Traversable;
 
-abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
+abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface, CacheItemPoolInterface
 {
     /**
      * @var BaseCacheItemInterface[] deferred
@@ -22,9 +23,9 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
     protected array $deferred = [];
 
     /**
-     * @var LoggerInterface
+     * @var ?LoggerInterface
      */
-    private LoggerInterface $logger;
+    private ?LoggerInterface $logger;
 
     /**
      * Make sure to commit before we destruct.
@@ -43,15 +44,7 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
             return clone $this->deferred[$key];
         }
 
-        $func = function () use ($key) {
-            try {
-                return $this->fetchObjectFromCache($key);
-            } catch (Exception $e) {
-                $this->handleException($e, __FUNCTION__);
-            }
-        };
-
-        return new CacheItem($key, $func);
+        return $this->fetchObjectFromCache($key);
     }
 
     /**
@@ -68,10 +61,7 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
         return $items;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function hasItem($key)
+    public function hasItem($key): bool
     {
         try {
             return $this->getItem($key)->isHit();
@@ -80,9 +70,6 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function clear(): bool
     {
         // Clear the deferred items
@@ -95,10 +82,7 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function deleteItem($key)
+    public function deleteItem(string $key): bool
     {
         try {
             return $this->deleteItems([$key]);
@@ -107,9 +91,6 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function deleteItems(array $keys): bool
     {
         $deleted = true;
@@ -132,10 +113,7 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
         return $deleted;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function save(CacheItemInterface $item)
+    public function save(CacheItemInterface $item): bool
     {
         if (!$item instanceof BaseCacheItemInterface) {
             $e = new InvalidArgumentException('Cache items are not transferable between pools. Item MUST implement BaseCacheItemInterface.');
@@ -159,9 +137,6 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function saveDeferred(CacheItemInterface $item): true
     {
         $this->deferred[$item->getKey()] = $item;
@@ -169,9 +144,6 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
         return true;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function commit(): bool
     {
         $saved = true;
@@ -318,11 +290,13 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
     /**
      * @param string $key
      *
+     * @throws \Psr\Cache\InvalidArgumentException
+     *
      * @return $this
      */
     protected function preRemoveItem(string $key): static
     {
-        $item = $this->getItem($key);
+        $this->getItem($key);
 
         return $this;
     }
@@ -342,9 +316,9 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
      *
      * @param string $key
      *
-     * @return array with [isHit, value, tags[], expirationTimestamp]
+     * @return BaseCacheItemInterface
      */
-    abstract protected function fetchObjectFromCache(string $key): array;
+    abstract protected function fetchObjectFromCache(string $key): BaseCacheItemInterface;
 
     /**
      * Clear all objects from cache.
@@ -386,7 +360,7 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
      * @param string $name
      * @param string $key
      */
-    abstract protected function appendListItem(string $name, string $key);
+    abstract protected function appendListItem(string $name, string $key): void;
 
     /**
      * Remove an item from the list.
@@ -394,23 +368,15 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
      * @param string $name
      * @param string $key
      */
-    abstract protected function removeListItem(string $name, string $key);
+    abstract protected function removeListItem(string $name, string $key): void;
 
     /**
      * @param string $key
      *
-     * @throws InvalidArgumentException
+     * @throws InvalidArgumentException|Exception
      */
-    protected function validateKey($key): void
+    protected function validateKey(string $key): void
     {
-        if (!is_string($key)) {
-            $e = new InvalidArgumentException(sprintf(
-                'Cache key must be string, "%s" given',
-                gettype($key)
-            ));
-            $this->handleException($e, __FUNCTION__);
-        }
-
         if (!isset($key[0])) {
             $e = new InvalidArgumentException('Cache key cannot be an empty string');
             $this->handleException($e, __FUNCTION__);
@@ -432,7 +398,7 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
      * @param string $message
      * @param array  $context
      */
-    protected function log(mixed $level, string $message, array $context = [])
+    protected function log(mixed $level, string $message, array $context = []): void
     {
         if ($this->logger !== null) {
             $this->logger->log($level, $message, $context);
@@ -447,7 +413,7 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
      *
      * @throws CachePoolException|Exception
      */
-    private function handleException(Exception $e, string $function)
+    private function handleException(Exception $e, string $function): void
     {
         $level = 'alert';
 
