@@ -2,6 +2,7 @@
 
 namespace Henrik\Cache;
 
+use DateInterval;
 use Exception;
 use Generator;
 use Henrik\Cache\Exception\CacheException;
@@ -174,7 +175,7 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
     /**
      * {@inheritdoc}
      */
-    public function get($key, $default = null): mixed
+    public function get(string $key, $default = null): mixed
     {
         $item = $this->getItem($key);
 
@@ -188,7 +189,7 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
     /**
      * {@inheritdoc}
      */
-    public function set($key, $value, $ttl = null): bool
+    public function set(string $key, mixed $value, null|DateInterval|int $ttl = null): bool
     {
         $item = $this->getItem($key);
         $item->set($value);
@@ -200,15 +201,17 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
     /**
      * {@inheritdoc}
      */
-    public function delete($key): bool
+    public function delete(string $key): bool
     {
+        $this->validateKey($key);
+
         return $this->deleteItem($key);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getMultiple($keys, $default = null): iterable
+    public function getMultiple(iterable $keys, mixed $default = null): iterable
     {
         if (!is_array($keys)) {
             if (!$keys instanceof Traversable) {
@@ -228,7 +231,7 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
     /**
      * {@inheritdoc}
      */
-    public function setMultiple($values, $ttl = null): bool
+    public function setMultiple(iterable $values, $ttl = null): bool
     {
         if (!is_array($values)) {
             if (!$values instanceof Traversable) {
@@ -387,7 +390,7 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
             $this->handleException($e, __FUNCTION__);
         }
 
-        if (preg_match('|[{}()/@:]|', $key)) {
+        if (preg_match('#[{}()/@:]#u', $key)) {
             $e = new InvalidArgumentException(sprintf(
                 'Invalid key: "%s". The key contains one or more characters reserved for future extension: {}()/\@:',
                 $key

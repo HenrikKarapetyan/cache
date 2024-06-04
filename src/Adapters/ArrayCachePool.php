@@ -116,6 +116,8 @@ class ArrayCachePool extends AbstractCachePool
      * {@inheritdDoc}.
      *
      * @param string $name
+     *
+     * @return array
      */
     protected function getList(string $name): array
     {
