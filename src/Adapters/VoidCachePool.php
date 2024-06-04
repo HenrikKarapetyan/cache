@@ -28,6 +28,9 @@ class VoidCachePool extends AbstractCachePool
         return true;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function getList(string $name): array
     {
         return [];

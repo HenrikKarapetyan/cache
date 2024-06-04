@@ -15,7 +15,7 @@ class ArrayCachePool extends AbstractCachePool
     private array $cache;
 
     /**
-     * @var array A map to hold keys
+     * @var array<int, string> A map to hold keys
      */
     private array $keyMap = [];
 
@@ -30,8 +30,8 @@ class ArrayCachePool extends AbstractCachePool
     private int $currentPosition = 0;
 
     /**
-     * @param int|null $limit the amount if items stored in the cache. Using a limit will reduce memory leaks.
-     * @param array    $cache
+     * @param int|null                           $limit the amount if items stored in the cache. Using a limit will reduce memory leaks.
+     * @param array<int, BaseCacheItemInterface> $cache
      */
     public function __construct(?int $limit = null, array &$cache = [])
     {
@@ -39,10 +39,9 @@ class ArrayCachePool extends AbstractCachePool
         $this->limit = $limit;
     }
 
-    protected function getItemWithoutGenerateCacheKey(string $key)
+    protected function getItemWithoutGenerateCacheKey(string $key): BaseCacheItemInterface
     {
         if (isset($this->deferred[$key])) {
-            /** @var CacheItem $item */
             return clone $this->deferred[$key];
         }
 
@@ -114,9 +113,11 @@ class ArrayCachePool extends AbstractCachePool
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritdDoc}.
+     *
+     * @param string $name
      */
-    protected function getList($name): array
+    protected function getList(string $name): array
     {
         if (!isset($this->cache[$name])) {
             $this->cache[$name] = [];

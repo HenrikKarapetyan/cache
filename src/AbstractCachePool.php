@@ -40,7 +40,6 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
         $this->validateKey($key);
 
         if (isset($this->deferred[$key])) {
-            /** @var CacheItem $item */
             return clone $this->deferred[$key];
         }
 
@@ -48,7 +47,9 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
+     *
+     * @return array<BaseCacheItemInterface>
      */
     public function getItems(array $keys = []): array
     {
@@ -139,6 +140,10 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
 
     public function saveDeferred(CacheItemInterface $item): true
     {
+        if (!$item instanceof BaseCacheItemInterface) {
+            $e = new InvalidArgumentException('Cache items are not transferable between pools. Item MUST implement BaseCacheItemInterface.');
+            $this->handleException($e, __FUNCTION__);
+        }
         $this->deferred[$item->getKey()] = $item;
 
         return true;
@@ -341,7 +346,7 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
      *
      * @param string $name
      *
-     * @return array
+     * @return array<string, mixed>
      */
     abstract protected function getList(string $name): array;
 
@@ -431,12 +436,12 @@ abstract class AbstractCachePool implements LoggerAwareInterface, CacheInterface
     }
 
     /**
-     * @param $default
-     * @param $items
+     * @param mixed                         $default
+     * @param array<BaseCacheItemInterface> $items
      *
      * @return Generator
      */
-    private function generateValues($default, $items): Generator
+    private function generateValues(mixed $default, array $items): Generator
     {
         foreach ($items as $key => $item) {
             /** @var CacheItemInterface $item */
