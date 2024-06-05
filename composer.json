@@ -23,7 +23,7 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "henrik\\Tests\\": "tests"
+      "henrik\\Cache\\Tests\\": "tests"
     }
   },
   "require-dev": {

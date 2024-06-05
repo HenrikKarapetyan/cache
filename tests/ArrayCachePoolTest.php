@@ -1,6 +1,6 @@
 <?php
 
-namespace Henrik\Tests;
+namespace Henrik\Cache\Tests;
 
 use Henrik\Cache\Adapters\ArrayCachePool;
 use PHPUnit\Framework\TestCase;
